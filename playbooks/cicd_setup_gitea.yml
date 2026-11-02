@@ -81,6 +81,30 @@
       retries: 24
       delay: 5
 
+    # Token secret is only returned at creation time. On re-runs Gitea returns
+    # HTTP 400 ("access token name has been used already"), so delete by name
+    # first, then create a fresh token.
+    - name: List existing Gitea API tokens for admin
+      ansible.builtin.uri:
+        url: "http://localhost:{{ gitea_port }}/api/v1/users/{{ gitea_admin_user }}/tokens"
+        method: GET
+        user: "{{ gitea_admin_user }}"
+        password: "{{ gitea_admin_password }}"
+        force_basic_auth: true
+        status_code: 200
+      register: gitea_existing_tokens
+
+    - name: Delete existing aap-demo-token if present
+      ansible.builtin.uri:
+        url: "http://localhost:{{ gitea_port }}/api/v1/users/{{ gitea_admin_user }}/tokens/{{ item.id }}"
+        method: DELETE
+        user: "{{ gitea_admin_user }}"
+        password: "{{ gitea_admin_password }}"
+        force_basic_auth: true
+        status_code: [204, 404]
+      loop: "{{ gitea_existing_tokens.json | selectattr('name', 'equalto', 'aap-demo-token') | list }}"
+      when: gitea_existing_tokens.json is sequence
+
     - name: Create Gitea API token for admin
       ansible.builtin.uri:
         url: "http://localhost:{{ gitea_port }}/api/v1/users/{{ gitea_admin_user }}/tokens"
@@ -97,7 +121,7 @@
             - write:repository
             - write:user
             - write:admin
-        status_code: [201, 422]
+        status_code: 201
       register: gitea_token_result
 
     - name: Get runner registration token from Gitea
@@ -152,5 +176,5 @@
           - "Gitea URL: http://{{ ansible_host }}:{{ gitea_port }}"
           - "Admin user: {{ gitea_admin_user }}"
           - "Admin password: {{ gitea_admin_password }}"
-          - "API token: {{ gitea_token_result.json.sha1 | default('token already existed - recreate manually') }}"
-          - "Next: run setup_gitea_repo.yml with gitea_api_token={{ gitea_token_result.json.sha1 | default('RETRIEVE_MANUALLY') }}"
+          - "API token: {{ gitea_token_result.json.sha1 }}"
+          - "Next: run setup_gitea_repo.yml with gitea_api_token={{ gitea_token_result.json.sha1 }}"
