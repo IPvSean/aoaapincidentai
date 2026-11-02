@@ -126,8 +126,8 @@
 
     - name: Get runner registration token from Gitea
       ansible.builtin.uri:
-        url: "http://localhost:{{ gitea_port }}/api/v1/admin/runners/registration-token"
-        method: GET
+        url: "http://localhost:{{ gitea_port }}/api/v1/admin/actions/runners/registration-token"
+        method: POST
         user: "{{ gitea_admin_user }}"
         password: "{{ gitea_admin_password }}"
         force_basic_auth: true
