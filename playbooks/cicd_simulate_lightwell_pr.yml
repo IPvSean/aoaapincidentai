@@ -15,7 +15,7 @@
   connection: local
   gather_facts: false
   vars:
-    _gitea_url: "http://52.55.229.162:3000"
+    _gitea_url: "http://13.219.110.138:3000"
     _gitea_token: "{{ gitea_token | default('') }}"
     _gitea_owner: "gitea-admin"
     _gitea_repo: "inventory-service"
